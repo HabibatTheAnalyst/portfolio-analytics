@@ -9,3 +9,6 @@ clone repo from github
 Q1 - PERFORMANCE
 Q2 - PERFORMANCE
 Q3 -?
+
+How did i setup neon?
+Steps taken
