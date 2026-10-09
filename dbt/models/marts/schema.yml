@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: mart_portfolio_value
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [price_date, ticker]
+    columns:
+      - name: market_value_usd
+        data_tests: [not_null]
+      - name: usd_ngn_rate
+        data_tests: [not_null]

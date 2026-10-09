@@ -78,3 +78,8 @@ TRANSFORMATION
 
 AFTER STAGING
 - run dbt `run --select staging --profiles-dir .` to chec that all staged files ran
+- then move to intermediate and marts. 
+- once done with marts and intermediate, run `dbt run --profiles-dir .` and `dbt test --profiles-dir .`
+
+`dbt run` should report 5 successful models (3 staging views, 1 intermediate view, 1 mart table).
+`dbt test` should pass everything. A failing test means a real data problem. The most likely one is usd_ngn_rate being null on early dates, which means the exchange rates don't cover every price date.
