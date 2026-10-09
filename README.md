@@ -74,3 +74,7 @@ TRANSFORMATION
         - multiple files including logs where created after running above
 
 - then run `dbt debug --profiles-dir .` checks that dbt is set up correctly.
+
+
+AFTER STAGING
+- run dbt `run --select staging --profiles-dir .` to chec that all staged files ran

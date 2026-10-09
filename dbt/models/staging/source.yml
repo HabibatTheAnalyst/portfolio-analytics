@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: python_ingest         # loaded by the VS Code scripts
+    schema: public              # the schema where the tables are located (neon)
+    tables:
+      - name: stock_prices_vsc   # the table name in the schema (neon)
+      - name: exchange_rates_vsc
+
+  - name: airbyte               # loaded by Airbyte
+    schema: public
+    tables:
+      - name: trade_log
