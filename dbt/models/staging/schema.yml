@@ -17,10 +17,20 @@ models:
       - name: usd_ngn_rate
         data_tests: [not_null]
 
+  - name: stg_company
+    columns:
+      - name: ticker
+        data_tests: [not_null, unique]
+
   - name: stg_trades
     columns:
       - name: ticker
-        data_tests: [not_null]
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_company')
+                field: ticker
       - name: shares
         data_tests: [not_null]
       - name: price_paid

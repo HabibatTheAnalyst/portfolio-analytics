@@ -6,6 +6,7 @@ sources:
     tables:
       - name: stock_prices_vsc   # the table name in the schema (neon)
       - name: exchange_rates_vsc
+      - name: company_vsc
 
   - name: airbyte               # loaded by Airbyte
     schema: public
