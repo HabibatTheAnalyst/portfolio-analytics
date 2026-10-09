@@ -1,0 +1,13 @@
+portfolio_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('neon_host') }}"
+      port: 5432
+      user: "{{ env_var('neon_user') }}"
+      password: "{{ env_var('neon_password') }}"
+      dbname: "{{ env_var('neon_db') }}"
+      schema: analytics
+      sslmode: require
+      threads: 4

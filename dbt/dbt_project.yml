@@ -1,0 +1,13 @@
+name: portfolio_dbt
+version: "1.0.0"
+profile: portfolio_dbt
+model-paths: ["models"]
+
+models:
+  portfolio_dbt:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
