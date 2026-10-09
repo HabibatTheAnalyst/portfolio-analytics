@@ -1,5 +1,5 @@
-select
-    rate_date::date         as rate_date,
-    usd_ngn_rate::numeric   as usd_ngn_rate,
+SELECT
+    rate_date::date         AS rate_date,
+    usd_ngn_rate::numeric   AS usd_ngn_rate,
     is_filled
-from {{ source('python_ingest', 'exchange_rates_vsc') }}
+FROM {{ source('python_ingest', 'exchange_rates_vsc') }}

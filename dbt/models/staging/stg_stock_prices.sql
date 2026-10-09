@@ -1,5 +1,5 @@
-select
-    price_date::date        as price_date,
-    upper(trim(ticker))     as ticker,
-    close_price::numeric    as close_price
-from {{ source('python_ingest', 'stock_prices_vsc') }}
+SELECT
+    price_date::date        AS price_date,
+    upper(trim(ticker))     AS ticker,
+    close_price::numeric    AS close_price
+FROM {{ source('python_ingest', 'stock_prices_vsc') }}
