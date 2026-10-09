@@ -63,3 +63,14 @@ Step 3: same destination as the one used for google sheet.
     issues - date ids not returning histprical data even after specifying startdate
             - its returning EUR rate not USD 
             - thats the defualt currency on free plan
+    resolution - used python script instead of airbyte
+
+TRANSFORMATION
+- create the dbt folder and files for transformation 
+- set the destination (neon in this case) credentials in .env
+- run `set -a; source .env; set +a` in terminal to load the credentials into the terminal session so dbt can read them with env_var(...). `YOU WILL HAVE TO RE RUN THIS FOR EVERY NEW TERMINAL WINDOW` 
+- then run `dbt deps --profiles-dir .` it downloads the packages listed in packages.yml (here, dbt_utils) into a dbt_packages/ folder in your project. Without it, dbt test fails with an error that the macro can't be found. You only need to run it once per project, plus again if you change packages.yml or clone the project onto a new machine. You don't need it before every dbt run. 
+
+        - multiple files including logs where created after running above
+
+- then run `dbt debug --profiles-dir .` checks that dbt is set up correctly.
