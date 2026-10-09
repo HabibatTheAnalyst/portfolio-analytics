@@ -1,70 +1,48 @@
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import psycopg2
 import requests
+import yfinance as yf
 from dotenv import load_dotenv
 from psycopg2.extras import execute_values
 
 load_dotenv()
 
-base_url = "https://api.apilayer.com/exchangerates_data"
+url = "https://open.er-api.com/v6/latest/USD"
 table_name = "exchange_rates_vsc"
 file_name = "exchange_rates.csv"
 start_date = "2026-01-01"
-max_days_per_call = 365   # timeseries range limit per request (check the apilayer docs)
 
 def get_connection():
     return psycopg2.connect(os.environ["neon_connection_string"])
 
-def api_get(path, params):
-    # one authenticated request to apilayer, with error checking
-    response = requests.get(
-        f"{base_url}/{path}",
-        headers={"apikey": os.environ["apilayer_key"]},
-        params=params,
-        timeout=30,
-    )
-    if response.status_code != 200:
-        raise RuntimeError(f"apilayer {path} failed ({response.status_code}): {response.text}")
-    data = response.json()
-    if not data.get("success"):
-        raise RuntimeError(f"API error: {data}")
-    return data
-
 def fetch_today():
-    # latest USD/NGN rate from apilayer
-    data = api_get("latest", {"base": "USD", "symbols": "NGN"})
-    rate_date = date.fromisoformat(data["date"])
+    # latest USD/NGN rate from the API
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+    if data.get("result") != "success":
+        raise RuntimeError(f"API error: {data}")
+    rate_date = datetime.fromtimestamp(
+        data["time_last_update_unix"], tz=timezone.utc
+    ).date()
     return pd.DataFrame([{
         "rate_date": rate_date,
         "usd_ngn_rate": float(data["rates"]["NGN"]),
     }])
 
 def fetch_history(start_date):
-    # daily USD/NGN rates from apilayer (timeseries), from start_date to today
-    start = pd.to_datetime(start_date).date()
-    end = datetime.now(timezone.utc).date()
-    rows = []
-    chunk_start = start
-    while chunk_start <= end:
-        chunk_end = min(chunk_start + timedelta(days=max_days_per_call - 1), end)
-        data = api_get("timeseries", {
-            "start_date": chunk_start.isoformat(),
-            "end_date": chunk_end.isoformat(),
-            "base": "USD",
-            "symbols": "NGN",
-        })
-        for day, rates in data["rates"].items():
-            rows.append({
-                "rate_date": date.fromisoformat(day),
-                "usd_ngn_rate": float(rates["NGN"]),
-            })
-        chunk_start = chunk_end + timedelta(days=1)
-    if not rows:
+    # daily USD/NGN rates from Yahoo, from start_date to today
+    history_data = yf.Ticker("USDNGN=X").history(start=str(start_date), auto_adjust=True)
+    if history_data.empty:
         return pd.DataFrame(columns=["rate_date", "usd_ngn_rate"])
-    return pd.DataFrame(rows).dropna()
+    df = pd.DataFrame({
+        "rate_date": history_data.index.tz_localize(None).date,
+        "usd_ngn_rate": history_data["Close"].values,
+    })
+    return df.dropna()
 
 def create_table():
     # make the table if it doesn't exist yet
