@@ -22,7 +22,7 @@ def api_get(path, params):
     # one authenticated request to apilayer, with error checking
     response = requests.get(
         f"{base_url}/{path}",
-        headers={"apikey": os.environ["apilayer_key"]},
+        headers={"apikey": os.environ["APILAYER_KEY"]},
         params=params,
         timeout=30,
     )
