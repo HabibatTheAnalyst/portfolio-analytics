@@ -1,107 +1,222 @@
-# portfolio-analytics
-Tracking investment value in USD and NGN
+# Global Investment Analytics Platform
 
-%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20parent%3D%221%22%20style%3D%22rounded%3D1%3BwhiteSpace%3Dwrap%3Bhtml%3D1%3BroundedPerimeter%3D1%3B%22%20value%3D%22%22%20vertex%3D%221%22%3E%3CmxGeometry%20height%3D%2260%22%20width%3D%22120%22%20x%3D%2240%22%20y%3D%22120%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E
+> **The question this answers:** *What is my investment portfolio actually worth, in both USD and Naira, over time?*
 
-clone repo from github
-- git clone {https-link} give-the-repo-a-name
+A personal portfolio data platform. Three different sources are ingested into a Neon (Postgres) warehouse, transformed with dbt Core into one analytics table, visualised in Metabase, and refreshed automatically every weekday by GitHub Actions.
 
+![Dashboard](images/dashboardd.png)
 
-Q1 - PERFORMANCE
-Q2 - PERFORMANCE
-Q3 -?
+---
 
-How did i setup neon?
-Steps taken
+## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Sources
+        A["yfinance<br/>daily closing prices"]
+        B["Google Sheet<br/>manual trade log"]
+        C["apilayer API<br/>USD to NGN rates"]
+        D["Company reference list"]
+    end
 
-setup airbyte
-- connect trade logs in google sheet via native(created and handled by airbyte) connection in airbyte
-- go to connections tab, click on googlesheet, input the google sheet url and depending on how large the file is, set bacth upload.
+    A -- Python --> N[("Neon Postgres<br/>raw tables")]
+    C -- Python --> N
+    D -- Python --> N
+    B -- "Airbyte Cloud" --> N
 
-- then i get redirected to destination page
-    - here, select postgres because there's no "neon"
-    - then input neon's connection details
-    - using the connection string, you get below to be filled in destination page in airbyte
-        Host	ep-xxxx-pooler.us-east-2.aws.neon.tech (everything after @ and before /)
-        Port	5432
-        Database name	mydb (after the /, before the ?)
-        Username	investment_portfolio_owner
-        Password	after : before @
-        SSL mode	require
-        SSH Tunnel Method   No Tunnel
-    - you get taken to the next page to set scheme
-    - then configure connections
+    N --> T["dbt Core<br/>staging, intermediate, mart"]
+    T --> M["Metabase in Docker<br/>dashboard"]
 
+    G["GitHub Actions<br/>Mon-Fri 18:00 WAT"] -. orchestrates .-> A
+    G -. orchestrates .-> C
+    G -. orchestrates .-> B
+    G -. orchestrates .-> T
+```
 
-Exchange rata data
-UPLOAD TO NEON VIA AIRBYTE USING CUSTOM CONNECTION
+| Layer | Tool | Role |
+|---|---|---|
+| Ingestion | Python (`yfinance`, `requests`, `psycopg2`) | Stock prices, exchange rates, company list, loaded straight into Neon |
+| Ingestion | Airbyte Cloud (native Google Sheets source) | Trade log, copied from Google Sheets into Neon |
+| Warehouse | Neon (serverless Postgres) | Raw tables in `public`, dbt models in `analytics` |
+| Transformation | dbt Core 1.10 (`dbt-postgres`) | Cleans each source, joins them, calculates value and gain/loss in USD and NGN |
+| Visualisation | Metabase (self-hosted via Docker) | Four required charts on one dashboard |
+| Orchestration | GitHub Actions | One daily workflow, fails loudly on any broken step |
 
-Prerequisites
-    - Exchange Rates API account
-    - API Access Key
-Setup Guide
+---
 
-step 0: search for "Exchange Rates API" connection in Airbyte connnection/marketplace
+## Data sources
 
-Step 1: Set up Exchange Rates API
-    - Create an account with Exchange Rates API. https://marketplace.apilayer.com/exchangerates_data-api#pricing 
-    - Navigate to the Exchange Rates API Dashboard to find your API Access Key.
+| Source | Method | Raw table in Neon | Notes |
+|---|---|---|---|
+| Stock prices | `get-tickers.py` using `yfinance` | `stock_prices_vsc` | 8 tickers: AAPL, MSFT, GOOGL, AMZN, NVDA, JPM, TSLA, JNJ. Adjusted daily close, in USD |
+| Trade log | Google Sheet, then Airbyte native Google Sheets source | `trade_log` | Date, ticker, shares, price paid (USD). Realistic imaginary portfolio: 8 trades, one per ticker, January 2026 |
+| Exchange rates | `get-exchange-rates.py` using the apilayer Exchange Rates Data API | `exchange_rates_vsc` | Full history from 2026-01-01 on the first run, then the latest rate each day. Missing weekdays are filled automatically |
+| Company reference | `get-company.py` | `company_vsc` | Ticker, company name and sector. A small hand-written lookup table |
 
-NOTE: If you have a free subscription plan, you will have two limitations to the plan: 1. Limit of 1,000 API calls per month 2. You won't be able to specify the base parameter, meaning that you will be only be allowed to use the default base value which is EUR.
+Each Python script upserts into Neon (safe to re-run, no duplicates) and also saves a local CSV copy.
 
-Step 2: Set up the Exchange Rates connector in Airbyte
-    - Enter a Name for your source.
-    - Enter your API key as the access_key from the prerequisites.
-    - Enter the Start Date in YYYY-MM-DD format. The data added on and after this date will be replicated.
-    (Optional) Enter a base currency. For those on the free plan, EUR is the only option available. If none are specified, EUR will be used.
-    - Click Set up source.
+---
 
-Step 3: same destination as the one used for google sheet. 
-    - Schedule type - cron set to run mon - fri 6pm (0 0 18 ? * MON-FRI)
+## Data model
 
+![ERD](images/ERD.png)
 
-    issues - date ids not returning histprical data even after specifying startdate
-            - its returning EUR rate not USD 
-            - thats the defualt currency on free plan
-    resolution - used python script instead of airbyte
+### dbt layers (schema `analytics`)
 
-TRANSFORMATION
-- create the dbt folder and files for transformation 
-- set the destination (neon in this case) credentials in .env
-- run `set -a; source .env; set +a` in terminal to load the credentials into the terminal session so dbt can read them with env_var(...). `YOU WILL HAVE TO RE RUN THIS FOR EVERY NEW TERMINAL WINDOW` 
-- then run `dbt deps --profiles-dir .` it downloads the packages listed in packages.yml (here, dbt_utils) into a dbt_packages/ folder in your project. Without it, dbt test fails with an error that the macro can't be found. You only need to run it once per project, plus again if you change packages.yml or clone the project onto a new machine. You don't need it before every dbt run. 
+```
+sources (raw)            staging (tables)            intermediate (view)        mart (table)
+stock_prices_vsc   --->  stg_stock_prices   --+
+exchange_rates_vsc --->  stg_exchange_rates  -+--> int_daily_positions ---> mart_portfolio_value
+company_vsc        --->  stg_company         -+
+trade_log          --->  stg_trades          --+
+```
 
-        - multiple files including logs where created after running above
+| Layer | Model | Job |
+|---|---|---|
+| Staging | `stg_*` (one per source) | Rename, cast types, standardise tickers. No joins, no maths |
+| Intermediate | `int_daily_positions` | For each day and ticker: shares held and cost basis (all purchases up to that date) |
+| Mart | `mart_portfolio_value` | The deliverable. One row per date per ticker, with USD and NGN values and gain/loss |
 
-- then run `dbt debug --profiles-dir .` checks that dbt is set up correctly.
+### How values are calculated
 
+| Column | Formula |
+|---|---|
+| `shares_held` | Sum of shares bought on or before the date |
+| `market_value_usd` | `shares_held x close_price` |
+| `cost_basis_usd` | Sum of `shares x price_paid` |
+| `unrealized_gain_usd` | `market_value_usd - cost_basis_usd` |
+| `market_value_ngn` | `market_value_usd x USD/NGN rate on that date` |
+| `cost_basis_ngn` | Sum of `shares x price_paid x USD/NGN rate on the purchase date` |
+| `unrealized_gain_ngn` | `market_value_ngn - cost_basis_ngn` |
 
-AFTER STAGING
-- run dbt `run --select staging --profiles-dir .` to chec that all staged files ran
-- then move to intermediate and marts. 
-- once done with marts and intermediate, run `dbt run --profiles-dir .` and `dbt test --profiles-dir .`
+Because the NGN cost is converted at the rate on each purchase date, **the NGN return includes the effect of the naira moving since purchase**, so it can differ from the USD return. The mart also provides `avg_cost_usd`, `unrealized_gain_pct`, `unrealized_gain_pct_ngn`, `gain_loss_status`, `company_name` and `sector`.
 
-`dbt run` should report 5 successful models (3 staging views, 1 intermediate view, 1 mart table).
-`dbt test` should pass everything. A failing test means a real data problem. The most likely one is usd_ngn_rate being null on early dates, which means the exchange rates don't cover every price date.
+### Tests (17 dbt data tests)
 
+- `not_null` on prices, rates, shares, trade fields and key mart columns
+- `unique` on `rate_date` and on `stg_company.ticker`
+- `unique_combination_of_columns` on `(price_date, ticker)` in the staging prices and the mart
+- `relationships`: every traded ticker exists in `stg_company`, and every trade date has an exchange rate
 
-VISUALIZATION
-- to link metabase to docker, run in terminal 
-        docker run -d -p 3000:3000 \
-        -v ~/investment-portfolio-metabase-data:/metabase-data \
-        -e "MB_DB_FILE=/metabase-data/metabase.db" \
-        --name investment-portfolio-metabase metabase/metabase
+---
 
-- When you see a line saying Metabase is initialised or similar, open http://localhost:3000
-- then create admin account
-- then connect Metabase to Neon
-- create charts and dashboards
+## Orchestration
 
+One workflow, `.github/workflows/pipeline.yml`, runs **Monday to Friday at 17:00 UTC (18:00 WAT)**. It can also be started manually from the Actions tab (`workflow_dispatch`).
 
-HOW TO CREATE airbyte credential ids fro GITHUB automation access
-- go to airbyte
-- then settings
-- then to "user profile name" at the bottom left
-- then to applications
-- then create create application
+```
+1. python get-tickers.py          stock prices  -> Neon
+2. python get-exchange-rates.py   exchange rates -> Neon
+3. python trigger_airbyte.py      start the Airbyte sync, wait until it succeeds
+4. dbt deps
+5. dbt run                        rebuild staging, intermediate, mart
+6. dbt test                       data quality checks
+```
+
+Steps run in order and the workflow stops at the first failure, so dbt never runs on stale or partial data. `concurrency` prevents overlapping runs. Credentials come from GitHub Actions secrets, never from the repo.
+
+![Successful workflow run](images/pipeline-run.png)
+
+---
+
+## Visualisation (Metabase)
+
+All charts read from `analytics.mart_portfolio_value`.
+
+| Question | Chart |
+|---|---|
+| Portfolio value over time | Line: amount invested vs market value |
+| Gain/loss by position | Bar, latest day, gains green and losses red |
+| Current allocation | Donut by ticker |
+| Portfolio value in NGN vs USD | Two line charts side by side (kept separate because naira values are about 1,400 times larger) |
+
+---
+
+## Repository structure
+
+```
+portfolio-analytics/
+├── .github/workflows/pipeline.yml     daily orchestration
+├── dbt/
+│   ├── dbt_project.yml, packages.yml, profiles.yml, package-lock.yml
+│   └── models/
+│       ├── staging/                   sources.yml, schema.yml, stg_*.sql
+│       ├── intermediate/              int_daily_positions.sql
+│       └── marts/                     schema.yml, mart_portfolio_value.sql
+├── images/                            screenshots and ERD
+├── get-tickers.py                     stock prices
+├── get-exchange-rates.py              exchange rates
+├── get-company.py                     company reference table
+├── generate-trade-log-single-run.py   builds trade_log.csv for the Google Sheet
+├── trigger_airbyte.py                 triggers and waits for the Airbyte sync
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Setup
+
+### 1. Python environment
+
+```bash
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Environment variables
+
+Create a `.env` file (already in `.gitignore`) with no spaces around `=`:
+
+```
+neon_connection_string="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
+neon_host="..."
+neon_user="..."
+neon_password="..."
+neon_db="..."
+apilayer_key="..."
+AIRBYTE_CLIENT_ID="..."
+AIRBYTE_CLIENT_SECRET="..."
+AIRBYTE_CONNECTION_IDS="..."
+```
+
+The Python scripts use `neon_connection_string`. dbt uses the four separate `neon_*` values.
+
+### 3. Load the data
+
+```bash
+python get-company.py
+python get-tickers.py
+python get-exchange-rates.py
+```
+
+Import `trade_log.csv` into Google Sheets (header row: `date, ticker, shares, price_paid`), then run the Airbyte connection once.
+
+### 4. Airbyte
+
+Source: Google Sheets (native). Destination: Postgres, pointed at Neon with SSL on. Set the connection schedule to **Manual**, because GitHub Actions triggers it.
+
+### 5. dbt
+
+```bash
+set -a; source .env; set +a
+cd dbt
+dbt deps --profiles-dir .
+dbt run  --profiles-dir .
+dbt test --profiles-dir .
+```
+
+### 6. Metabase
+
+```bash
+docker run -d -p 3000:3000 \
+  -v ~/investment-portfolio-metabase-data:/metabase-data \
+  -e "MB_DB_FILE=/metabase-data/metabase.db" \
+  --name investment-portfolio-metabase metabase/metabase
+```
+
+Open http://localhost:3000, add the Neon database (PostgreSQL, SSL on), and build the charts on `analytics.mart_portfolio_value`.
+
+### 7. GitHub Actions secrets
+
+Settings, Secrets and variables, Actions, then add: `NEON_CONNECTION_STRING`, `NEON_HOST`, `NEON_USER`, `NEON_PASSWORD`, `NEON_DB`, `APILAYER_KEY`, `AIRBYTE_CLIENT_ID`, `AIRBYTE_CLIENT_SECRET`, `AIRBYTE_CONNECTION_IDS`
