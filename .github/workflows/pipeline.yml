@@ -44,7 +44,7 @@ jobs:
         run: python get-exchange-rates.py
 
       - name: 3. Trigger Airbyte sync (trade log)
-        run: python scripts/trigger_airbyte.py
+        run: python trigger_airbyte.py
 
       - name: 4. dbt deps
         working-directory: dbt
