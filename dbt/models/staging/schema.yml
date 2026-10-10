@@ -31,6 +31,13 @@ models:
               arguments:
                 to: ref('stg_company')
                 field: ticker
+      - name: trade_date
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_exchange_rates')
+                field: rate_date
       - name: shares
         data_tests: [not_null]
       - name: price_paid

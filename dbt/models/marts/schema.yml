@@ -11,3 +11,5 @@ models:
         data_tests: [not_null]
       - name: usd_ngn_rate
         data_tests: [not_null]
+      - name: cost_basis_ngn
+        data_tests: [not_null]
