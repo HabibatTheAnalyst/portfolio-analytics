@@ -20,9 +20,9 @@ jobs:
       neon_password: ${{ secrets.NEON_PASSWORD }}
       neon_db: ${{ secrets.NEON_DB }}
       apilayer_key: ${{ secrets.APILAYER_KEY }}
-      airbyte_client_id: ${{ secrets.AIRBYTE_CLIENT_ID }}
-      airbyte_client_secret: ${{ secrets.AIRBYTE_CLIENT_SECRET }}
-      airbyte_connection_ids: ${{ secrets.AIRBYTE_CONNECTION_IDS }}
+      AIRBYTE_CLIENT_ID: ${{ secrets.AIRBYTE_CLIENT_ID }}
+      AIRBYTE_CLIENT_SECRET: ${{ secrets.AIRBYTE_CLIENT_SECRET }}
+      AIRBYTE_CONNECTION_IDS: ${{ secrets.AIRBYTE_CONNECTION_IDS }}
 
     steps:
       - name: Check out repository
