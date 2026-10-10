@@ -48,11 +48,11 @@ jobs:
 
       - name: Check dbt variables
         run: |
-          for v in neon_host neon_user neon_password neon_db; do
+          for v in NEON_HOST NEON_USER NEON_PASSWORD NEON_DB; do
             val="${!v}"
             echo "$v length: ${#val}"
           done
-          
+
       - name: 4. dbt deps
         working-directory: dbt
         run: dbt deps --profiles-dir .
