@@ -22,7 +22,7 @@ companies = [
 ]
 
 def get_connection():
-    return psycopg2.connect(os.environ["neon_connection_string"])
+    return psycopg2.connect(os.environ["NEON_CONNECTION_STRING"])
 
 def build_dataset():
     df = pd.DataFrame(companies, columns=["ticker", "company_name", "sector"])

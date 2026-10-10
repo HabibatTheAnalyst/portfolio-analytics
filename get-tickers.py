@@ -14,7 +14,7 @@ table_name = "stock_prices_vsc"
 file_name = "stock_prices.csv"
 
 def get_connection():
-    return psycopg2.connect(os.environ["neon_connection_string"])
+    return psycopg2.connect(os.environ["NEON_CONNECTION_STRING"])
 
 def fetch_prices():
     # daily adjusted closing prices for all tickers, in long format

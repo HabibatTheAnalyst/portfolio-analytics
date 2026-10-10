@@ -16,7 +16,7 @@ start_date = "2026-01-01"
 max_days_per_call = 365   # timeseries range limit per request (check the apilayer docs)
 
 def get_connection():
-    return psycopg2.connect(os.environ["neon_connection_string"])
+    return psycopg2.connect(os.environ["NEON_CONNECTION_STRING"])
 
 def api_get(path, params):
     # one authenticated request to apilayer, with error checking

@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      neon_connection_string: ${{ secrets.NEON_CONNECTION_STRING }}
-      neon_host: ${{ secrets.NEON_HOST }}
-      neon_user: ${{ secrets.NEON_USER }}
-      neon_password: ${{ secrets.NEON_PASSWORD }}
-      neon_db: ${{ secrets.NEON_DB }}
-      apilayer_key: ${{ secrets.APILAYER_KEY }}
+      NEON_CONNECTION_STRING: ${{ secrets.NEON_CONNECTION_STRING }}
+      NEON_HOST: ${{ secrets.NEON_HOST }}
+      NEON_USER: ${{ secrets.NEON_USER }}
+      NEON_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+      NEON_DB: ${{ secrets.NEON_DB }}
+      APILAYER_KEY: ${{ secrets.APILAYER_KEY }}
       AIRBYTE_CLIENT_ID: ${{ secrets.AIRBYTE_CLIENT_ID }}
       AIRBYTE_CLIENT_SECRET: ${{ secrets.AIRBYTE_CLIENT_SECRET }}
       AIRBYTE_CONNECTION_IDS: ${{ secrets.AIRBYTE_CONNECTION_IDS }}
