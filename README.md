@@ -96,3 +96,11 @@ VISUALIZATION
 - then create admin account
 - then connect Metabase to Neon
 - create charts and dashboards
+
+
+HOW TO CREATE airbyte credential ids fro GITHUB automation access
+- go to airbyte
+- then settings
+- then to "user profile name" at the bottom left
+- then to applications
+- then create create application

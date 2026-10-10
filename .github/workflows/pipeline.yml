@@ -1,0 +1,59 @@
+name: daily-portfolio-pipeline
+
+on:
+  schedule:
+    - cron: "0 17 * * 1-5"   # Mon-Fri 17:00 UTC = 18:00 in Nigeria
+  workflow_dispatch:           # manual "Run workflow" button
+
+concurrency:
+  group: portfolio-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      neon_connection_string: ${{ secrets.NEON_CONNECTION_STRING }}
+      neon_host: ${{ secrets.NEON_HOST }}
+      neon_user: ${{ secrets.NEON_USER }}
+      neon_password: ${{ secrets.NEON_PASSWORD }}
+      neon_db: ${{ secrets.NEON_DB }}
+      apilayer_key: ${{ secrets.APILAYER_KEY }}
+      airbyte_client_id: ${{ secrets.AIRBYTE_CLIENT_ID }}
+      airbyte_client_secret: ${{ secrets.AIRBYTE_CLIENT_SECRET }}
+      airbyte_connection_ids: ${{ secrets.AIRBYTE_CONNECTION_IDS }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 1. Load stock prices (yfinance)
+        run: python get-tickers.py
+
+      - name: 2. Load exchange rates
+        run: python get-exchange-rates.py
+
+      - name: 3. Trigger Airbyte sync (trade log)
+        run: python scripts/trigger_airbyte.py
+
+      - name: 4. dbt deps
+        working-directory: dbt
+        run: dbt deps --profiles-dir .
+
+      - name: 5. dbt run
+        working-directory: dbt
+        run: dbt run --profiles-dir .
+
+      - name: 6. dbt test
+        working-directory: dbt
+        run: dbt test --profiles-dir .
