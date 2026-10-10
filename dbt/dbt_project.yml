@@ -6,7 +6,7 @@ model-paths: ["models"]
 models:
   portfolio_dbt:
     staging:
-      +materialized: view
+      +materialized: table
     intermediate:
       +materialized: view
     marts:
