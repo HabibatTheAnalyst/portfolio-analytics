@@ -6,7 +6,7 @@ A personal portfolio data platform. Three different sources are ingested into a 
 
 ![Dashboard](images/dashboardd.png)
 
-### What the dashboard shows (as of Oct 9, 2026)
+### Dashboard insights as of Oct 9, 2026
 - **Invested vs market value:** About $37,173.34 was invested across 8 purchases in January, with nothing added since. The portfolio sat below cost from roughly February to late April, then recovered and is now worth about $41,866.77, or about ₦55.7 million at the latest exchange rate.  
 - **Return in USD vs NGN:** The portfolio is up about 12% in USD but only about 5% in NGN. Both returns bottomed out in late March and April, and in early July the NGN return dipped to about -5% while the USD return was close to zero.
 - **Why the two returns differ:** The naira strengthened between purchase and valuation, so each dollar now converts into fewer naira than when the shares were bought. The currency movement absorbed part of the dollar gain.
