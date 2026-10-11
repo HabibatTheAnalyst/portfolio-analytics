@@ -1,6 +1,6 @@
 # Global Investment Analytics Platform
 
-> **The question this answers:** *What is my investment portfolio actually worth, in both USD and Naira, over time?*
+> **The question this project answers:** *What is my investment portfolio actually worth, in both USD and Naira, over time?*
 
 A personal portfolio data platform. Three different sources are ingested into a Neon (Postgres) warehouse, transformed with dbt Core into one analytics table, visualised in Metabase, and refreshed automatically every weekday by GitHub Actions.
 
