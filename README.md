@@ -1,4 +1,4 @@
-# Global Investment Analytics Platform
+# Investment Portfolio Pipieline and Insights
 
 > **The question this project answers:** *What is my investment portfolio actually worth, in both USD and Naira, over time?*
 
