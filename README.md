@@ -46,7 +46,7 @@ flowchart LR
 | Ingestion | Airbyte Cloud (native Google Sheets source) | Trade log, copied from Google Sheets into Neon |
 | Warehouse | Neon (serverless Postgres) | Raw tables in `public`, dbt models in `analytics` |
 | Transformation | dbt Core 1.10 (`dbt-postgres`) | Cleans each source, joins them, calculates value and gain/loss in USD and NGN |
-| Visualisation | Metabase (self-hosted via Docker) | Four required charts on one dashboard |
+| Visualisation | Metabase (self-hosted via Docker) | Four charts on one dashboard |
 | Orchestration | GitHub Actions | One daily workflow, fails loudly on any broken step |
 
 ---
