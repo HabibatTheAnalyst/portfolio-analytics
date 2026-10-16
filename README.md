@@ -58,7 +58,7 @@ flowchart LR
 | Stock prices | `get-tickers.py` using `yfinance` | `stock_prices_vsc` | 8 tickers: AAPL, MSFT, GOOGL, AMZN, NVDA, JPM, TSLA, JNJ. Adjusted daily close, in USD |
 | Trade log | Google Sheet, then Airbyte native Google Sheets source | `trade_log` | Date, ticker, shares, price paid (USD). Realistic imaginary portfolio: 8 trades, one per ticker, January 2026 |
 | Exchange rates | `get-exchange-rates.py` using the apilayer Exchange Rates Data API | `exchange_rates_vsc` | Full history from 2026-01-01 on the first run, then the latest rate each day. Missing weekdays are filled automatically |
-| Company reference | `get-company.py` | `company_vsc` | Ticker, company name and sector. A small hand-written lookup table |
+| Company reference | `generate-company-data.py` | `company_vsc` | Ticker, company name and sector. A small hand-written lookup table |
 
 Each Python script upserts into Neon (safe to re-run, no duplicates) and also saves a local CSV copy.
 
@@ -153,7 +153,7 @@ portfolio-analytics/
 ├── images/                            screenshots and ERD
 ├── get-tickers.py                     stock prices
 ├── get-exchange-rates.py              exchange rates
-├── get-company.py                     company reference table
+├── generate-company-data.py           company reference table
 ├── generate-trade-log-single-run.py   builds trade_log.csv for the Google Sheet
 ├── trigger_airbyte.py                 triggers and waits for the Airbyte sync
 ├── requirements.txt
@@ -192,7 +192,7 @@ The Python scripts use `neon_connection_string`. dbt uses the four separate `neo
 ### 3. Load the data
 
 ```bash
-python get-company.py
+python generate-company-data.py
 python get-tickers.py
 python get-exchange-rates.py
 ```
