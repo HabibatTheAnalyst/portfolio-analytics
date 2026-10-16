@@ -1,4 +1,4 @@
-# Investment Portfolio Pipieline and Insights
+# Investment Portfolio Pipeline and Insights
 
 > **The question this project answers:** *What is my investment portfolio actually worth, in both USD and Naira, over time?*
 
